@@ -13,9 +13,10 @@ import (
 	"sync/atomic"
 )
 
-// SGD trains the Learner of a Batcher using
-// stochastic gradient descent with the provided
-// inputs and corresponding expected outputs.
+// SGD performs stochastic gradient descent using the
+// specified Gradienter.
+// It runs until a certain number of epochs (full sweeps
+// over the sample set) have elapsed.
 func SGD(g Gradienter, samples SampleSet, stepSize float64, epochs, batchSize int) {
 	s := samples.Copy()
 	for i := 0; i < epochs; i++ {
