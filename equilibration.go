@@ -91,7 +91,6 @@ func (e *Equilibration) updateSquareMags(s SampleSet) autofunc.Gradient {
 		params := e.Learner.Parameters()
 		e.rCache = autofunc.RVector(autofunc.NewGradient(params))
 	}
-	e.randomizeRVector()
 
 	sampleCount := e.NumSamples
 	if sampleCount == 0 {
@@ -101,6 +100,7 @@ func (e *Equilibration) updateSquareMags(s SampleSet) autofunc.Gradient {
 	var grad autofunc.Gradient
 	var rGrad autofunc.RGradient
 	for i := 0; i < sampleCount; i++ {
+		e.randomizeRVector()
 		g, rg := e.RGradienter.RGradient(e.rCache, s)
 		grad = g
 		squareRGrad(rg)
