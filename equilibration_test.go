@@ -57,3 +57,28 @@ func TestEquilibrationManySamples(t *testing.T) {
 		}
 	}
 }
+
+func TestEquilibrationMemory(t *testing.T) {
+	rand.Seed(123)
+	gradienter := equilibrationTestGradienter{
+		Var: &autofunc.Variable{Vector: []float64{0.5, -0.8}},
+	}
+	eq := Equilibration{
+		RGradienter: gradienter,
+		Learner:     gradienter,
+		Memory:      0.999,
+	}
+	for i := 0; i < 100000; i++ {
+		eq.Gradient(nil)
+	}
+	grad := eq.Gradient(nil)
+	actual := grad[gradienter.Var]
+	expected := []float64{2 * 0.5 / 2, 2 * 3 * -0.8 / 6}
+
+	for i, x := range expected {
+		a := actual[i]
+		if math.Abs(x-a) > 5e-2 {
+			t.Errorf("index %d: expected %f got %f", i, x, a)
+		}
+	}
+}
