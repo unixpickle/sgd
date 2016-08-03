@@ -22,6 +22,12 @@ type SampleSet interface {
 	// Subset creates a SampleSet which represents the
 	// subset of this sample set from the start index
 	// (inclusive) to the end index (exclusive).
+	//
+	// The resulting sample set is only valid as long
+	// as elements of the receiver are not manipulated
+	// via Swap(). This is similar to the regular Go
+	// slice behavior, wherein a sub-slice of a slice
+	// references the same backing array.
 	Subset(start, end int) SampleSet
 }
 
