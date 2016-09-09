@@ -2,8 +2,6 @@
 
 package sgd
 
-import "github.com/unixpickle/sgd"
-
 // SGDInteractive is like SGD, but it calls sf before
 // each epoch and stops when sf returns false.
 //
@@ -29,12 +27,12 @@ func SGDMini(g Gradienter, s SampleSet, stepSize float64, batchSize int,
 	sf func(batch SampleSet) bool) {
 	shuffledSet := s.Copy()
 	sampleIdx := shuffledSet.Len()
-	var subset sgd.SampleSet
+	var subset SampleSet
 	loopUntilKilled(func() bool {
 		sampleIdx += batchSize
 		if sampleIdx >= shuffledSet.Len() {
 			sampleIdx = 0
-			sgd.ShuffleSampleSet(shuffledSet)
+			ShuffleSampleSet(shuffledSet)
 		}
 		bs := batchSize
 		if bs > shuffledSet.Len()-sampleIdx {
