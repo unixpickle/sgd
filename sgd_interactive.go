@@ -2,54 +2,17 @@
 
 package sgd
 
-import (
-	"fmt"
-	"os"
-	"os/signal"
-	"sync/atomic"
-)
-
-// SGDInteractive is like SGD, but it calls a
-// function before every epoch and stops when
-// said function returns false, or when the
-// user sends a kill signal.
-// The sf function may modify the SampleSet,
-// and the new sample set will be used on the
-// next iteration.
+// SGDInteractive is like SGD, but it calls sf before
+// each epoch and stops when sf returns false.
+//
+// On platforms which support interrupts, it also stops
+// for an os.Interrupt signal.
+//
+// Calling sf may modify the SampleSet for the next epoch,
+// allowing for a dynamic set of samples (provided that
+// the SampleSet can be modified in place).
 func SGDInteractive(g Gradienter, s SampleSet, stepSize float64, batchSize int, sf func() bool) {
-	var killed uint32
-
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	defer func() {
-		select {
-		case <-c:
-		default:
-			signal.Stop(c)
-			close(c)
-		}
-	}()
-
-	go func() {
-		_, ok := <-c
-		if !ok {
-			return
-		}
-		signal.Stop(c)
-		close(c)
-		atomic.StoreUint32(&killed, 1)
-		fmt.Println("\nCaught interrupt. Ctrl+C again to terminate.")
-	}()
-
-	for atomic.LoadUint32(&killed) == 0 {
-		if sf != nil {
-			if !sf() {
-				return
-			}
-		}
-		if atomic.LoadUint32(&killed) != 0 {
-			return
-		}
+	loopUntilKilled(sf, func() {
 		SGD(g, s, stepSize, 1, batchSize)
-	}
+	})
 }
