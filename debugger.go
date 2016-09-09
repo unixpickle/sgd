@@ -50,17 +50,21 @@ func logGradientStats(g autofunc.Gradient) {
 
 func logVariableStats(v *autofunc.Variable, grad linalg.Vector, idx int) {
 	var mean, variance, maxAbs, meanChange float64
-	for i, x := range v.Vector {
+	var zeroCount int
+	for i, x := range grad {
 		mean += x
 		variance += x * x
 		maxAbs = math.Max(maxAbs, math.Abs(x))
-		meanChange += math.Abs(x / grad[i])
+		meanChange += math.Abs(x / v.Vector[i])
+		if x == 0 {
+			zeroCount++
+		}
 	}
 	mean /= float64(len(v.Vector))
 	variance /= float64(len(v.Vector))
 	meanChange /= float64(len(v.Vector))
 	variance -= mean * mean
 
-	log.Printf("Variable %d: mean=%f variance=%f max=%f val/grad=%f", idx, mean, variance,
-		maxAbs, meanChange)
+	log.Printf("Variable %d: mean=%f variance=%f max=%f grad/val=%f zeroes=%d",
+		idx, mean, variance, maxAbs, meanChange, zeroCount)
 }
