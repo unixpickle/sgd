@@ -38,7 +38,7 @@ func SGDMini(g Gradienter, s SampleSet, stepSize float64, batchSize int,
 		if bs > shuffledSet.Len()-sampleIdx {
 			bs = shuffledSet.Len() - sampleIdx
 		}
-		subset = shuffledSet.Subset(sampleIdx, bs)
+		subset = shuffledSet.Subset(sampleIdx, sampleIdx+bs)
 		return sf(subset)
 	}, func() {
 		grad := g.Gradient(subset)
