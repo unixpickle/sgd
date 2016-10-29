@@ -1,6 +1,11 @@
 package sgd
 
-import "testing"
+import (
+	"bytes"
+	"testing"
+
+	"github.com/unixpickle/num-analysis/linalg"
+)
 
 type hashTestSample struct {
 	hash []byte
@@ -39,5 +44,19 @@ func TestHashSplit(t *testing.T) {
 		} else {
 			rightValues[h] = false
 		}
+	}
+}
+
+func TestHashVectors(t *testing.T) {
+	vecs1 := []linalg.Vector{{1, 2, 3}, {4, 5, 6}}
+	vecs2 := []linalg.Vector{{1, 2}, {3, 4, 5, 6}}
+	hash1 := HashVectors(vecs1...)
+	hash2 := HashVectors(vecs2...)
+	hash3 := HashVectors(vecs1...)
+	if !bytes.Equal(hash1, hash3) {
+		t.Error("inconsistent hashes")
+	}
+	if bytes.Equal(hash1, hash2) {
+		t.Error("hash collision")
 	}
 }

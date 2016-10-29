@@ -1,11 +1,38 @@
 package sgd
 
-import "sort"
+import (
+	"crypto/md5"
+	"encoding/binary"
+	"math"
+	"sort"
+
+	"github.com/unixpickle/num-analysis/linalg"
+)
 
 // A Hasher can generate a binary hash of its contents.
 // Hashes should be randomly distributed.
 type Hasher interface {
 	Hash() []byte
+}
+
+// HashVectors is a helper for hashing vector-valued
+// training samples.
+// It takes vectors and hashes them in a
+// randomly-distributed manner.
+func HashVectors(vecs ...linalg.Vector) []byte {
+	sum := md5.New()
+
+	destBytes := make([]byte, 8)
+	for _, vec := range vecs {
+		for _, x := range vec {
+			bits := math.Float64bits(x)
+			binary.BigEndian.PutUint64(destBytes, bits)
+			sum.Write(destBytes)
+		}
+		sum.Write([]byte{0})
+	}
+
+	return sum.Sum(nil)
 }
 
 // HashSplit partitions a SampleSet whose samples all
