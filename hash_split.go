@@ -1,6 +1,7 @@
 package sgd
 
 import (
+	"bytes"
 	"crypto/md5"
 	"encoding/binary"
 	"math"
@@ -20,19 +21,17 @@ type Hasher interface {
 // It takes vectors and hashes them in a
 // randomly-distributed manner.
 func HashVectors(vecs ...linalg.Vector) []byte {
-	sum := md5.New()
-
-	destBytes := make([]byte, 8)
+	var buf bytes.Buffer
+	tempBuf := make([]byte, 8)
 	for _, vec := range vecs {
 		for _, x := range vec {
-			bits := math.Float64bits(x)
-			binary.BigEndian.PutUint64(destBytes, bits)
-			sum.Write(destBytes)
+			binary.BigEndian.PutUint64(tempBuf, math.Float64bits(x))
+			buf.Write(tempBuf)
 		}
-		sum.Write([]byte{0})
+		buf.WriteByte(0)
 	}
-
-	return sum.Sum(nil)
+	res := md5.Sum(buf.Bytes())
+	return res[:]
 }
 
 // HashSplit partitions a SampleSet whose samples all
@@ -50,32 +49,19 @@ func HashSplit(s SampleSet, leftRatio float64) (left, right SampleSet) {
 		return s, s.Subset(0, 0)
 	}
 
-	sorter := &hashSorter{set: s}
-	sort.Sort(sorter)
-
 	cutoff := hashCutoff(leftRatio)
+	insertIdx := 0
+	for i := 0; i < s.Len(); i++ {
+		hash := s.GetSample(i).(Hasher).Hash()
+		if compareHashes(hash, cutoff) < 0 {
+			s.Swap(insertIdx, i)
+			insertIdx++
+		}
+	}
 	splitIdx := sort.Search(s.Len(), func(i int) bool {
 		return compareHashes(s.GetSample(i).(Hasher).Hash(), cutoff) >= 0
 	})
 	return s.Subset(0, splitIdx), s.Subset(splitIdx, s.Len())
-}
-
-type hashSorter struct {
-	set SampleSet
-}
-
-func (h *hashSorter) Len() int {
-	return h.set.Len()
-}
-
-func (h *hashSorter) Swap(i, j int) {
-	h.set.Swap(i, j)
-}
-
-func (h *hashSorter) Less(i, j int) bool {
-	hash1 := h.set.GetSample(i).(Hasher).Hash()
-	hash2 := h.set.GetSample(j).(Hasher).Hash()
-	return compareHashes(hash1, hash2) < 0
 }
 
 func hashCutoff(ratio float64) []byte {
