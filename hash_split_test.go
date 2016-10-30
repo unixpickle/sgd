@@ -50,13 +50,18 @@ func TestHashSplit(t *testing.T) {
 func TestHashVectors(t *testing.T) {
 	vecs1 := []linalg.Vector{{1, 2, 3}, {4, 5, 6}}
 	vecs2 := []linalg.Vector{{1, 2}, {3, 4, 5, 6}}
+	vecs3 := []linalg.Vector{{1, 2, 2}, {3, 4, 5, 6}}
 	hash1 := HashVectors(vecs1...)
 	hash2 := HashVectors(vecs2...)
-	hash3 := HashVectors(vecs1...)
-	if !bytes.Equal(hash1, hash3) {
+	hash3 := HashVectors(vecs3...)
+	hash4 := HashVectors(vecs1...)
+	if !bytes.Equal(hash1, hash4) {
 		t.Error("inconsistent hashes")
 	}
 	if bytes.Equal(hash1, hash2) {
+		t.Error("hash collision")
+	}
+	if bytes.Equal(hash2, hash3) {
 		t.Error("hash collision")
 	}
 }

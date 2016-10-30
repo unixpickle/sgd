@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/binary"
+	"io"
 	"math"
 	"sort"
 
@@ -23,11 +24,28 @@ type Hasher interface {
 func HashVectors(vecs ...linalg.Vector) []byte {
 	var buf bytes.Buffer
 	tempBuf := make([]byte, 8)
+
+	var lastValue float64
+	var valueCount byte
 	for _, vec := range vecs {
 		for _, x := range vec {
-			binary.BigEndian.PutUint64(tempBuf, math.Float64bits(x))
-			buf.Write(tempBuf)
+			if x == lastValue && valueCount < 0xff {
+				valueCount++
+			} else {
+				if valueCount > 0 {
+					buf.WriteByte(valueCount)
+					writeFloatBits(&buf, tempBuf, lastValue)
+				}
+				lastValue = x
+				valueCount = 1
+			}
 		}
+		if valueCount > 0 {
+			buf.WriteByte(valueCount)
+			writeFloatBits(&buf, tempBuf, lastValue)
+			valueCount = 0
+		}
+		// Separator between vectors.
 		buf.WriteByte(0)
 	}
 	res := md5.Sum(buf.Bytes())
@@ -98,4 +116,9 @@ func compareHashes(h1, h2 []byte) int {
 		}
 	}
 	return 0
+}
+
+func writeFloatBits(w io.Writer, temp []byte, val float64) {
+	binary.BigEndian.PutUint64(temp, math.Float64bits(val))
+	w.Write(temp)
 }
