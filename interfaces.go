@@ -35,3 +35,13 @@ type RGradienter interface {
 	// next call to Gradient or RGradient.
 	RGradient(autofunc.RVector, SampleSet) (autofunc.Gradient, autofunc.RGradient)
 }
+
+// A Transformer transforms gradients in some way, such as
+// preconditioning the gradients or applying momentum.
+//
+// The Transform method may modify its argument, and its
+// return value is not guaranteed to be related to its
+// argument in any way.
+type Transformer interface {
+	Transform(autofunc.Gradient) autofunc.Gradient
+}

@@ -12,6 +12,10 @@ const defaultRMSPropResiliency = 0.9
 // Gradienter and attempts to pre-condition SGD
 // by dividing weights by a rolling average of
 // their previous and current values.
+//
+// When used as a Gradienter, this will use its wrapped
+// Gradienter to acquire gradients and then pass said
+// gradients to Transform.
 type RMSProp struct {
 	Gradienter Gradienter
 
@@ -35,7 +39,10 @@ type RMSProp struct {
 }
 
 func (r *RMSProp) Gradient(s SampleSet) autofunc.Gradient {
-	grad := r.Gradienter.Gradient(s)
+	return r.Transform(r.Gradienter.Gradient(s))
+}
+
+func (r *RMSProp) Transform(grad autofunc.Gradient) autofunc.Gradient {
 	squaredGrad := grad.Copy()
 	for _, v := range squaredGrad {
 		for i, x := range v {

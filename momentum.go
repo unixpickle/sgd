@@ -3,6 +3,10 @@ package sgd
 import "github.com/unixpickle/autofunc"
 
 // Momentum implements basic momentum.
+//
+// When used as a Gradienter, this will use its wrapped
+// Gradienter to acquire gradients and then pass said
+// gradients to Transform.
 type Momentum struct {
 	Gradienter Gradienter
 	Momentum   float64
@@ -11,7 +15,10 @@ type Momentum struct {
 }
 
 func (m *Momentum) Gradient(s SampleSet) autofunc.Gradient {
-	grad := m.Gradienter.Gradient(s)
+	return m.Transform(m.Gradienter.Gradient(s))
+}
+
+func (m *Momentum) Transform(grad autofunc.Gradient) autofunc.Gradient {
 	if m.velocity == nil {
 		m.velocity = grad.Copy()
 	} else {

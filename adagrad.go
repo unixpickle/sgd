@@ -6,8 +6,12 @@ import (
 	"github.com/unixpickle/autofunc"
 )
 
-// AdaGrad is a Gradienter which implements the
-// AdaGrad SGD algorithm.
+// AdaGrad is a Gradienter and a Transformer which
+// implements the AdaGrad SGD algorithm.
+//
+// When used as a Gradienter, this will use its wrapped
+// Gradienter to acquire gradients and then pass said
+// gradients to Transform.
 type AdaGrad struct {
 	Gradienter Gradienter
 	Damping    float64
@@ -16,8 +20,10 @@ type AdaGrad struct {
 }
 
 func (a *AdaGrad) Gradient(s SampleSet) autofunc.Gradient {
-	actualGrad := a.Gradienter.Gradient(s)
+	return a.Transform(a.Gradienter.Gradient(s))
+}
 
+func (a *AdaGrad) Transform(actualGrad autofunc.Gradient) autofunc.Gradient {
 	if a.squaredHistory == nil {
 		a.squaredHistory = actualGrad.Copy()
 		for _, v := range a.squaredHistory {

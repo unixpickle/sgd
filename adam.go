@@ -14,6 +14,10 @@ const (
 
 // Adam implements the adaptive moments SGD technique
 // described in https://arxiv.org/pdf/1412.6980.pdf.
+//
+// When used as a Gradienter, this will use its wrapped
+// Gradienter to acquire gradients and then pass said
+// gradients to Transform.
 type Adam struct {
 	Gradienter Gradienter
 
@@ -34,7 +38,10 @@ type Adam struct {
 }
 
 func (a *Adam) Gradient(s SampleSet) autofunc.Gradient {
-	realGradient := a.Gradienter.Gradient(s)
+	return a.Transform(a.Gradienter.Gradient(s))
+}
+
+func (a *Adam) Transform(realGradient autofunc.Gradient) autofunc.Gradient {
 	a.updateMoments(realGradient)
 
 	a.iteration++

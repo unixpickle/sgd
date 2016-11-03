@@ -16,6 +16,10 @@ const (
 // GradientClipper is a Gradienter which scales down
 // gradients so that the norm of the gradient is less
 // than a certain value.
+//
+// When used as a Gradienter, this will use its wrapped
+// Gradienter to acquire gradients and then pass said
+// gradients to Transform.
 type GradientClipper struct {
 	Gradienter Gradienter
 	Threshold  float64
@@ -23,7 +27,10 @@ type GradientClipper struct {
 }
 
 func (c *GradientClipper) Gradient(s SampleSet) autofunc.Gradient {
-	res := c.Gradienter.Gradient(s)
+	return c.Transform(c.Gradienter.Gradient(s))
+}
+
+func (c *GradientClipper) Transform(res autofunc.Gradient) autofunc.Gradient {
 	var norm float64
 
 	switch c.Norm {
