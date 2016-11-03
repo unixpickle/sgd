@@ -18,13 +18,13 @@ type Updater interface {
 
 // A TransformerUpdater updates parameters by feeding them
 // into an sgd.Transformer and then doing an SGD step.
-type GradienterUpdater struct {
+type TransformerUpdater struct {
 	StepSize    float64
 	Transformer sgd.Transformer
 }
 
 // Update applies the gradienter to g and descends along
 // the resulting gradient.
-func (g *GradienterUpdater) Update(grad autofunc.Gradient) {
+func (g *TransformerUpdater) Update(grad autofunc.Gradient) {
 	g.Transformer.Transform(grad).AddToVars(-g.StepSize)
 }
