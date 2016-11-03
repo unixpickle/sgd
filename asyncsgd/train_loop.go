@@ -8,12 +8,17 @@ import (
 )
 
 // TrainLoop runs an SGD training node.
+//
 // The batchSize argument specifies the number of samples
 // to process at once.
-// The syncBatchCount argument specifies how many batches
-// to run between syncing with the parameter server.
-func TrainLoop(g sgd.Gradienter, s sgd.SampleSet, batchSize, syncBatchCount int,
-	c *ParamClient, p []*autofunc.Variable) error {
+//
+// The syncDelay argument specifies how many batches to
+// run between syncing with the parameter server.
+//
+// If non-nil, the logFunc callback is called after every
+// synchronization to log the network's progress.
+func TrainLoop(g sgd.Gradienter, s sgd.SampleSet, batchSize, syncDelay int,
+	c *ParamClient, p []*autofunc.Variable, logFunc func()) error {
 	shuffledSet := s.Copy()
 	sampleIdx := shuffledSet.Len()
 
@@ -37,7 +42,7 @@ func TrainLoop(g sgd.Gradienter, s sgd.SampleSet, batchSize, syncBatchCount int,
 			totalGrad.Add(batchGrad)
 		}
 		unsyncedBatches++
-		if unsyncedBatches >= syncBatchCount {
+		if unsyncedBatches >= syncDelay {
 			if err := c.WriteParams(totalGrad, p); err != nil {
 				return errors.New("write params: " + err.Error())
 			}
@@ -46,6 +51,9 @@ func TrainLoop(g sgd.Gradienter, s sgd.SampleSet, batchSize, syncBatchCount int,
 			}
 			unsyncedBatches = 0
 			totalGrad = nil
+			if logFunc != nil {
+				logFunc()
+			}
 		}
 	}
 }
