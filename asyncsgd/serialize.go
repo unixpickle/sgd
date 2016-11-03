@@ -30,6 +30,9 @@ func DeserializeVectors(d []byte) ([]linalg.Vector, error) {
 	if err := binary.Read(r, byteOrder, &vecCount); err != nil {
 		return nil, serializer.ErrBufferUnderflow
 	}
+	if int(vecCount)*8 > r.Len() {
+		return nil, serializer.ErrBufferUnderflow
+	}
 	res := make([]linalg.Vector, int(vecCount))
 	for i := range res {
 		var valCount uint64

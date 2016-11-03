@@ -23,7 +23,7 @@ type ParamClient struct {
 // writes them into the variables.
 func (p *ParamClient) ReadParams(out []*autofunc.Variable) error {
 	u := *p.BaseURL
-	u.Path = ParamWritePath
+	u.Path = ParamReadPath
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return err
