@@ -11,10 +11,11 @@ import (
 	"github.com/unixpickle/num-analysis/linalg"
 )
 
-// A Hasher can generate a binary hash of its contents.
-// Hashes should be randomly distributed.
+// A Hasher is a SampleSet which can compute hashes of its
+// constituent samples.
 type Hasher interface {
-	Hash() []byte
+	SampleSet
+	Hash(i int) []byte
 }
 
 // HashVectors is a helper for hashing vector-valued
@@ -52,34 +53,32 @@ func HashVectors(vecs ...linalg.Vector) []byte {
 	return res[:]
 }
 
-// HashSplit partitions a SampleSet whose samples all
-// implement Hasher.
+// HashSplit partitions a Hasher.
 //
-// The given sample set may be reordered, and the returned
+// The given Hasder may be reordered, and the returned
 // sample sets will be subsets of it.
 //
 // The leftRatio argument specifies the expected fraction
 // of samples that should end up on the left partition.
-func HashSplit(s SampleSet, leftRatio float64) (left, right SampleSet) {
+func HashSplit(h Hasher, leftRatio float64) (left, right SampleSet) {
 	if leftRatio == 0 {
-		return s.Subset(0, 0), s
+		return h.Subset(0, 0), h
 	} else if leftRatio == 1 {
-		return s, s.Subset(0, 0)
+		return h, h.Subset(0, 0)
 	}
-
 	cutoff := hashCutoff(leftRatio)
 	insertIdx := 0
-	for i := 0; i < s.Len(); i++ {
-		hash := s.GetSample(i).(Hasher).Hash()
+	for i := 0; i < h.Len(); i++ {
+		hash := h.Hash(i)
 		if compareHashes(hash, cutoff) < 0 {
-			s.Swap(insertIdx, i)
+			h.Swap(insertIdx, i)
 			insertIdx++
 		}
 	}
-	splitIdx := sort.Search(s.Len(), func(i int) bool {
-		return compareHashes(s.GetSample(i).(Hasher).Hash(), cutoff) >= 0
+	splitIdx := sort.Search(h.Len(), func(i int) bool {
+		return compareHashes(h.Hash(i), cutoff) >= 0
 	})
-	return s.Subset(0, splitIdx), s.Subset(splitIdx, s.Len())
+	return h.Subset(0, splitIdx), h.Subset(splitIdx, h.Len())
 }
 
 func hashCutoff(ratio float64) []byte {

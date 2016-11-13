@@ -7,21 +7,23 @@ import (
 	"github.com/unixpickle/num-analysis/linalg"
 )
 
-type hashTestSample struct {
-	hash []byte
+type hashTestSet struct {
+	SliceSampleSet
 }
 
-func (h *hashTestSample) Hash() []byte {
-	return h.hash
+func (h hashTestSet) Hash(i int) []byte {
+	return h.GetSample(i).([]byte)
 }
 
 func TestHashSplit(t *testing.T) {
-	sampleSet := SliceSampleSet{
-		&hashTestSample{hash: []byte{0xac}},
-		&hashTestSample{hash: []byte{0x0}},
-		&hashTestSample{hash: []byte{0x50}},
-		&hashTestSample{hash: []byte{0xdc}},
-		&hashTestSample{hash: []byte{0x99}},
+	sampleSet := hashTestSet{
+		SliceSampleSet{
+			[]byte{0xac},
+			[]byte{0x0},
+			[]byte{0x50},
+			[]byte{0xdc},
+			[]byte{0x99},
+		},
 	}
 	left, right := HashSplit(sampleSet, 0.5)
 	if left.Len() != 2 || right.Len() != 3 {
@@ -30,7 +32,7 @@ func TestHashSplit(t *testing.T) {
 	leftValues := map[string]bool{"\x00": true, "\x50": true}
 	rightValues := map[string]bool{"\x99": true, "\xac": true, "\xdc": true}
 	for _, v := range left.(SliceSampleSet) {
-		h := string(v.(Hasher).Hash())
+		h := string(v.([]byte))
 		if !leftValues[h] {
 			t.Errorf("unexpected left hash: %v", []byte(h))
 		} else {
@@ -38,7 +40,7 @@ func TestHashSplit(t *testing.T) {
 		}
 	}
 	for _, v := range right.(SliceSampleSet) {
-		h := string(v.(Hasher).Hash())
+		h := string(v.([]byte))
 		if !rightValues[h] {
 			t.Errorf("unexpected right hash: %v", []byte(h))
 		} else {
