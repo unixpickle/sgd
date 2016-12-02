@@ -72,7 +72,7 @@ func (p *ParamClient) WriteParams(g autofunc.Gradient, v []*autofunc.Variable) e
 		return err
 	}
 	resp, err := http.DefaultClient.Do(req)
-	if resp.Body != nil {
+	if resp != nil {
 		defer resp.Body.Close()
 	}
 	if err != nil {
