@@ -1,5 +1,3 @@
-// +build !js
-
 package sgd
 
 // SGDInteractive is like SGD, but it calls sf before
